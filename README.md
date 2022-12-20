@@ -18,6 +18,16 @@ conda install pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 cudatoolkit=11
 conda install -c conda-forge h5py opencv scikit-learn matplotlib pandas scipy imageio visdom jsonpatch
 ```
 
+# Test with weighted model
+
+With correct angle
+
+`python test.py --model "./models/model_10000.pkl" --input "./testcase/2.jpg" --angle -0.019373154`
+
+Without target angle
+
+`python test.py --model "./models/model_10000.pkl" --input "./testcase/1.jpg"`
+
 # Download Dataset
 
 Download the dataset at [here](https://github.com/SullyChen/driving-datasets) and extract into the repository folder `driving_dataset`
@@ -32,19 +42,11 @@ Pay attension to you 8097 port, it needs to be occupied by visdom.
 # Models
 
 `./models/model_10000.pkl`
+
 `./models/model_100.pkl`
 
 # Train
 
 `python train.py`
 
-# Test
-
-With correct angle
-
-`python test.py --model "./models/model_10000.pkl" --input "./testcase/2.jpg" --angle -0.019373154`
-
-Without target angle
-
-`python test.py --model "./models/model_10000.pkl" --input "./testcase/1.jpg"`
 
