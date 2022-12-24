@@ -10,6 +10,11 @@ import math, time
 # self-defined module
 import Py_autopilot2_module
 
+import time
+from torchvision import transforms
+from thop import profile
+from thop import clever_format
+
 debug = True
 
 def time_it(output=''):
@@ -69,7 +74,10 @@ def load_data(model_path, input_path, angle):
     }
 
 @time_it('[Metrics][TIME] Running: ')
-def test(dataloader, network, device):
+def inference(model, img):
+    return model(img)
+@time_it('[Metrics][TIME] Testing: ')
+def test(dataloader, network, device, args):
     net_out_rec = []
     steer_rec = []
     test_loss = []
@@ -78,6 +86,22 @@ def test(dataloader, network, device):
     for i, data in enumerate(dataloader):
         img, steer = data
         img, steer = img.to(device), steer.to(device)
+
+        resize = transforms.Resize((args.height, args.width))
+        img = resize(img)
+
+        # FLOPS
+        macs, params = profile(network, inputs=(img,))
+        macs, params = clever_format([macs, params], "%.3f")
+        print('FLOPS: ', macs)
+
+        # forward
+        begin = time.time()
+        for i in range(args.test_num):
+            outputs = inference(network, img)
+        end = time.time()
+        print("Elpaed time: ", end - begin)
+        exit(0)
 
         net_out = network.forward(img).squeeze().float() 
         steer = steer.squeeze()
@@ -116,7 +140,13 @@ def main():
     parser.add_argument('--model', '-m', required=True, help='input model path')
     parser.add_argument('--input', '-i', required=True, help='input image path')
     parser.add_argument('--angle', '-a', type=float, help='Set target angle to get loss and accuracy')
-    
+
+    parser.add_argument("--width", required=False, type=int, help="Resize width", default=100)
+    parser.add_argument("--height", required=False, type=int, help="Resize height", default=100)
+    parser.add_argument("--test_num", required=False, type=int, help="Test example number", default=1000)
+    parser.add_argument("--log_mode", required=False, type=int, help="Log mode", default=0)
+    # parser.add_argument("--input", required=False, type=str, help="Input folder path", default='./data/')
+
     # 解析命令行参数
     args = parser.parse_args()
 
@@ -131,7 +161,7 @@ def main():
     network = data["network"]
     device = data["device"]
     # run model test
-    res = test(dataloader, network, device)
+    res = test(dataloader, network, device, args)
     
     debug and print("Predicted steering angle: ", res["res"])
     return res["res"]
